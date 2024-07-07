@@ -1,0 +1,34 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/Alandazad/unique-web-app.git'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                bat 'docker build -t Alandazad/unique-web-app .'
+            }
+        }
+
+        stage('Test') {
+            steps {
+                bat 'docker run Alandazad/unique-web-app pytest'
+            }
+        }
+
+        stage('Push') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-id-unique', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                    bat """
+                        docker login -u %DOCKER_USERNAME% -p %DOCKER_PASSWORD%
+                        docker push Alandazad/unique-web-app
+                    """
+                }
+            }
+        }
+    }
+}
